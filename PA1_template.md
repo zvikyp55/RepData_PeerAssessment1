@@ -1,13 +1,8 @@
----
-title: "Reproducible Research - Course Project 1"
-author: "Jeremy Pachtinger"
-date: "June 27, 2016"
-output: html_document
----
+# Reproducible Research - Course Project 1
+Jeremy Pachtinger  
+June 27, 2016  
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
+
 ##Introduction
 
 It is now possible to collect a large amount of data about personal movement using activity monitoring devices such as a Fitbit, Nike Fuelband, or Jawbone Up. These type of devices are part of the "quantified self" movement - a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. But these data remain under-utilized both because the raw data are hard to obtain and there is a lack of statistical methods and software for processing and interpreting the data.
@@ -26,14 +21,14 @@ This project performs some basic explanatory analysis and addresses the followin
 
 The first step is to read in the data, creating a secondary dataset without any records that have missing values.
 
-```{r Read in the data,cache=TRUE}
+
+```r
 ## Assume dataset is in working directory
 activity<-read.csv("activity.csv")
 ##convert date field to date format
 activity$date<-as.POSIXct(activity$date)    
 ## Create dataset with no NA's
 actNoNA<-activity[complete.cases(activity),]
-
 ```
 
 ###What is mean total number of steps taken per day?
@@ -44,7 +39,8 @@ Using the clean ( ie no missing values) we do the following:
  - Make a histogram of the total number of steps taken each day  
  - Calculate and report the mean and median of the total number of steps taken per day  
  
-```{r initial plots & analysis}
+
+```r
 ## Calculate total steps per day
 totsteps<-rowsum(actNoNA,actNoNA$date)[,1:2]
 totsteps$date<-as.POSIXct(row.names(totsteps))
@@ -52,19 +48,27 @@ totsteps$date<-as.POSIXct(row.names(totsteps))
 hist(totsteps$steps,breaks=30,xlab = "Steps", main="Histogram of Total Steps per Day")
 ```
 
+![](PA1_template_files/figure-html/initial plots & analysis-1.png)<!-- -->
+
 Next we show the mean and median of the total number of steps per day
-```{r mean and median}
+
+```r
 meanmed<-cbind(mean(totsteps$steps) , median(totsteps$steps))
 colnames(meanmed)<-c("Mean","Median")
 print(meanmed,row.names=FALSE)
+```
 
+```
+##          Mean Median
+## [1,] 10766.19  10765
 ```
  
 
 ###What is the average daily activity pattern?  
 
 We show a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all days (y-axis)
-```{r time series}
+
+```r
 ## Calculate average steps per interval
 avgintsteps<-aggregate(actNoNA,by=list(actNoNA$interval),mean)
 avgintsteps<-avgintsteps[,c(2,4)]
@@ -72,9 +76,17 @@ avgintsteps<-avgintsteps[,c(2,4)]
 plot(avgintsteps$steps~avgintsteps$interval,type="l",xlab="Interval",ylab="Steps",main="Average Steps by Interval")
 ```
 
+![](PA1_template_files/figure-html/time series-1.png)<!-- -->
+
 Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?
-```{r}
+
+```r
 print(avgintsteps[which.max(avgintsteps$steps),],row.names=FALSE)
+```
+
+```
+##     steps interval
+##  206.1698      835
 ```
 
 ###Imputing missing values
@@ -82,12 +94,18 @@ print(avgintsteps[which.max(avgintsteps$steps),],row.names=FALSE)
 There are a number of days/intervals where there are missing values (coded as NA). The presence of missing days may introduce bias into some calculations or summaries of the data.
 
 The total number of missing values in the dataset (i.e. the total number of rows with NAs) is:
-```{r}
+
+```r
 print(nrow(activity)-nrow(actNoNA),row.names=FALSE)
 ```
 
+```
+## [1] 2304
+```
+
 Use the mean of each 5-minute interval to replace any missing values and create a new dataset that is equal to the original dataset but with the missing data filled in.
-```{r Impute Missing}
+
+```r
 ## create a dataset of the missing values
 actNA<-activity[!complete.cases(activity),]
 ##Subset the NoNA dataset to the intervals in the NA dataset
@@ -113,18 +131,35 @@ What impact has the imputation had on the data?
  - Do these values differ from the estimates from the first part of the assignment?  
  - What is the impact of imputing missing data on the estimates of the total daily number of steps?
  
-```{r histogram of imputed data} 
+
+```r
 totstepsall<-rowsum(actallOk,actallOk$date)[,1:2]
 ##Create Histogram and compare to prior
 par(mfrow=c(1,2))
 hist(totstepsall$steps,breaks=30,xlab = "Steps", ylim=c(0,20),main="Histogram of Total Steps per Day  \n (NAs replaced with mean of each interval)")
 hist(totsteps$steps,breaks=30,xlab = "Steps",ylim=c(0,20), main="Histogram of Total Steps per Day")
+```
 
+![](PA1_template_files/figure-html/histogram of imputed data-1.png)<!-- -->
+
+```r
 meanmedall<-cbind(mean(totstepsall$steps) , median(totstepsall$steps))
 colnames(meanmedall)<-c("Mean.Imputed.NA","Median.Imputed.NA")
 print(meanmedall,row.names=FALSE)
-print(meanmed,row.names=FALSE)
+```
 
+```
+##      Mean.Imputed.NA Median.Imputed.NA
+## [1,]        10766.19          10766.19
+```
+
+```r
+print(meanmed,row.names=FALSE)
+```
+
+```
+##          Mean Median
+## [1,] 10766.19  10765
 ```
 
 ###Are there differences in activity patterns between weekdays and weekends?
@@ -133,20 +168,37 @@ Using the dataset with the filled-in missing values we create a new factor varia
 
 We make a panel plot containing a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis). 
 
-```{r weekday/end}
+
+```r
 #add weekday/weekend field
 actallOk$wkDay<-ifelse( weekdays(actallOk$date) %in% "Saturday" | weekdays(actallOk$date) %in% "Sunday" ,"weekend","weekday")
 #aggregate to interval by wkDay
 actallwk<-actallOk[,-2] #drop date
 require(plyr)
+```
+
+```
+## Loading required package: plyr
+```
+
+```r
 actallwk<-ddply(actallwk,.(interval,wkDay),colwise(mean))
 
 #create panel plot
 require(lattice)
+```
+
+```
+## Loading required package: lattice
+```
+
+```r
  xyplot(actallwk$steps~actallwk$interval|actallwk$wkDay, 
    	main="Average Steps per Interval",
     xlab="Interval",ylab="Number of Steps",
     layout=c(1,2),type="l")
 ```
+
+![](PA1_template_files/figure-html/weekday/end-1.png)<!-- -->
 
 
